@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
 </head>
 <body>
     <button id="darkModeToggle">Toggle Dark Mode</button>
@@ -22,16 +25,10 @@
                 <button onclick="closeModal()">Cancel</button>
             </div>
         </div>
-        <div id="trendsChart">
-            <h2>Progress Trends</h2>
-            <canvas id="trendsCanvas"></canvas>
-        </div>
         <div class="export-container">
             <button id="exportButton" onclick="exportData()">Export Progress Data</button>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
