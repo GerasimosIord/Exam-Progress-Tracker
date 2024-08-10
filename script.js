@@ -129,14 +129,34 @@ function updateTrendsChart() {
     }
 
     const datasets = progress.map(course => {
-        let cumulativeData = course.dailyProgress.reduce((acc, day) => {
-            const lastValue = acc.length > 0 ? acc[acc.length - 1].y : 0;
-            acc.push({ x: new Date(day.date + 'T00:00:00'), y: lastValue + day.slides });
-            return acc;
-        }, []);
+        let cumulativeData = [];
+        let cumulativeTotal = 0;
 
+        // Sort the daily progress by date
+        const sortedProgress = course.dailyProgress.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        sortedProgress.forEach(day => {
+            cumulativeTotal += day.slides;
+            cumulativeData.push({
+                x: new Date(day.date + 'T00:00:00'),
+                y: cumulativeTotal
+            });
+        });
+
+        // If there's no progress data, add initial completed slides
+        if (cumulativeData.length === 0 && course.initialCompleted > 0) {
+            cumulativeData.push({
+                x: new Date(),
+                y: course.initialCompleted
+            });
+        }
+
+        // Ensure there are at least two points for the chart
         if (cumulativeData.length === 1) {
-            cumulativeData.unshift({ x: new Date(cumulativeData[0].x.getTime() - 86400000), y: 0 });
+            cumulativeData.unshift({
+                x: new Date(cumulativeData[0].x.getTime() - 86400000),
+                y: 0
+            });
         }
 
         return {
@@ -220,11 +240,6 @@ function updateTrendsChart() {
                     mode: 'nearest',
                     axis: 'x',
                     intersect: false
-                },
-                layout: {
-                    padding: {
-                        bottom: 20
-                    }
                 }
             }
         });
