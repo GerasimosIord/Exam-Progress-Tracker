@@ -39,9 +39,6 @@ body {
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    min-height: calc(100vh - 40px);
-    display: flex;
-    flex-direction: column;
 }
 
 h1, h2 {
@@ -115,22 +112,10 @@ input[type="number"] {
     color: var(--text-color);
 }
 
-#trendsChart {
-    margin-top: 30px;
-    margin-bottom: 50px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-#trendsCanvas {
-    flex-grow: 1;
-}
-
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
@@ -164,5 +149,20 @@ input[type="number"] {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1001;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #darkModeToggle {
+        top: 10px;
+        right: 10px;
+    }
 }
