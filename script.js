@@ -7,13 +7,15 @@ const courses = [
 ];
 
 let progress = [];
-let lastUpdateDate;
+let lastUpdateDate = new Date();
 
 function updateDateDisplay() {
     const dateElement = document.getElementById('currentDate');
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const formattedDate = new Date().toLocaleDateString(undefined, options);
-    dateElement.textContent = formattedDate;
+    if (dateElement) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = new Date().toLocaleDateString(undefined, options);
+        dateElement.textContent = formattedDate;
+    }
 }
 
 function initializeProgress() {
@@ -29,19 +31,23 @@ function initializeProgress() {
     saveProgress();
 }
 
-try {
-    const savedData = localStorage.getItem('studyProgress');
-    if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        progress = parsedData.progress;
-        lastUpdateDate = new Date(parsedData.lastUpdateDate);
-    } else {
+function loadProgress() {
+    try {
+        const savedData = localStorage.getItem('studyProgress');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            progress = parsedData.progress;
+            lastUpdateDate = new Date(parsedData.lastUpdateDate);
+        } else {
+            initializeProgress();
+        }
+    } catch (error) {
+        console.error('Error accessing localStorage:', error);
         initializeProgress();
     }
-} catch (error) {
-    console.error('Error accessing localStorage:', error);
-    initializeProgress();
 }
+
+loadProgress();
 
 let selectedCourse = null;
 
@@ -49,6 +55,8 @@ function renderCourses() {
     checkAndUpdateProgress();
     updateDateDisplay();
     const courseList = document.getElementById('courseList');
+    if (!courseList) return;
+    
     courseList.innerHTML = '<div class="course-grid"></div>';
     const courseGrid = courseList.querySelector('.course-grid');
     
@@ -78,37 +86,51 @@ function renderCourses() {
 
 function selectCourse(courseName) {
     selectedCourse = progress.find(course => course.name === courseName);
-    document.getElementById('selectedCourse').textContent = `Updating progress for: ${selectedCourse.name}`;
-    document.getElementById('updateProgressModal').style.display = 'block';
-    document.getElementById('slidesCompleted').focus();
+    const selectedCourseElement = document.getElementById('selectedCourse');
+    const modal = document.getElementById('updateProgressModal');
+    const slidesCompletedInput = document.getElementById('slidesCompleted');
+
+    if (selectedCourse && selectedCourseElement && modal && slidesCompletedInput) {
+        selectedCourseElement.textContent = `Updating progress for: ${selectedCourse.name}`;
+        modal.style.display = 'block';
+        slidesCompletedInput.focus();
+    }
 }
 
 function closeModal() {
-    document.getElementById('updateProgressModal').style.display = 'none';
+    const modal = document.getElementById('updateProgressModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function updateProgress() {
-    const slidesCompleted = parseInt(document.getElementById('slidesCompleted').value);
+    const slidesCompletedInput = document.getElementById('slidesCompleted');
+    if (!slidesCompletedInput) return;
+
+    const slidesCompleted = parseInt(slidesCompletedInput.value);
     if (selectedCourse && !isNaN(slidesCompleted) && slidesCompleted >= 0) {
         const courseIndex = progress.findIndex(course => course.name === selectedCourse.name);
-        progress[courseIndex].completedSlides = Math.min(
-            progress[courseIndex].completedSlides + slidesCompleted,
-            progress[courseIndex].totalSlides
-        );
-        const today = new Date().toISOString().split('T')[0];
-        const existingProgressIndex = progress[courseIndex].dailyProgress.findIndex(dp => dp.date === today);
-        if (existingProgressIndex !== -1) {
-            progress[courseIndex].dailyProgress[existingProgressIndex].slides += slidesCompleted;
-        } else {
-            progress[courseIndex].dailyProgress.push({
-                date: today,
-                slides: slidesCompleted
-            });
+        if (courseIndex !== -1) {
+            progress[courseIndex].completedSlides = Math.min(
+                progress[courseIndex].completedSlides + slidesCompleted,
+                progress[courseIndex].totalSlides
+            );
+            const today = new Date().toISOString().split('T')[0];
+            const existingProgressIndex = progress[courseIndex].dailyProgress.findIndex(dp => dp.date === today);
+            if (existingProgressIndex !== -1) {
+                progress[courseIndex].dailyProgress[existingProgressIndex].slides += slidesCompleted;
+            } else {
+                progress[courseIndex].dailyProgress.push({
+                    date: today,
+                    slides: slidesCompleted
+                });
+            }
+            saveProgress();
+            renderCourses();
+            slidesCompletedInput.value = '';
+            closeModal();
         }
-        saveProgress();
-        renderCourses();
-        document.getElementById('slidesCompleted').value = '';
-        closeModal();
     }
 }
 
@@ -124,7 +146,7 @@ function calculateDaysRemaining(examDate) {
 }
 
 function calculateAverageDailyProgress(course) {
-    if (course.dailyProgress.length <= 1) return 0; // Return 0 if only initial progress or no progress
+    if (course.dailyProgress.length <= 1) return 0;
     const totalSlides = course.dailyProgress.slice(1).reduce((sum, day) => sum + day.slides, 0);
     return Math.round(totalSlides / (course.dailyProgress.length - 1));
 }
@@ -133,11 +155,11 @@ function suggestDailyTarget(course) {
     const daysRemaining = calculateDaysRemaining(course.examDate);
     const slidesRemaining = course.totalSlides - course.completedSlides;
     if (daysRemaining <= 0) {
-        return slidesRemaining; // All remaining slides if exam is today or past
+        return slidesRemaining;
     } else if (daysRemaining === 1) {
-        return Math.max(slidesRemaining, Math.ceil(slidesRemaining / 2)); // At least half of remaining slides if 1 day left
+        return Math.max(slidesRemaining, Math.ceil(slidesRemaining / 2));
     } else {
-        return Math.max(Math.ceil(slidesRemaining / daysRemaining), 1); // At least 1 slide per day
+        return Math.max(Math.ceil(slidesRemaining / daysRemaining), 1);
     }
 }
 
@@ -172,11 +194,13 @@ function checkAndUpdateProgress() {
     }
     
     const today = new Date();
-    if (!lastUpdateDate || today.toDateString() !== lastUpdateDate.toDateString()) {
+    if (today.toDateString() !== lastUpdateDate.toDateString()) {
         progress.forEach(course => {
-            if (!course.dailyProgress || course.dailyProgress.length === 0 || 
+            if (!Array.isArray(course.dailyProgress)) {
+                course.dailyProgress = [];
+            }
+            if (course.dailyProgress.length === 0 || 
                 course.dailyProgress[course.dailyProgress.length - 1].date !== today.toISOString().split('T')[0]) {
-                course.dailyProgress = course.dailyProgress || [];
                 course.dailyProgress.push({
                     date: today.toISOString().split('T')[0],
                     slides: 0
@@ -225,7 +249,12 @@ if (savedDarkMode === 'true') {
 }
 
 // Add dark mode toggle button event listener
-document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (darkModeToggle) {
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+}
 
-updateDateDisplay();
-renderCourses();
+document.addEventListener('DOMContentLoaded', function() {
+    updateDateDisplay();
+    renderCourses();
+});
