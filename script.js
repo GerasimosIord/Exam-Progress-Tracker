@@ -84,12 +84,12 @@ function updateProgress() {
     if (selectedCourse && !isNaN(slidesCompleted) && slidesCompleted >= 0) {
         const courseIndex = progress.findIndex(course => course.name === selectedCourse.name);
         progress[courseIndex].completedSlides = Math.min(
-            progress[courseIndex].completedSlides + slidesCompleted,
+            progress[courseIndex].completedSlides + slidesCompleted, 
             progress[courseIndex].totalSlides
         );
         progress[courseIndex].dailyProgress.push({
             date: new Date().toISOString().split('T')[0],
-            slides: slidesCompleted
+            slides: slidesCompleted    
         });
         saveProgress();
         renderCourses();
@@ -123,25 +123,21 @@ function suggestDailyTarget(course) {
 
 function updateTrendsChart() {
     const ctx = document.getElementById('trendsCanvas').getContext('2d');
-
+    
     if (trendsChart) {
-        trendsChart.destroy();  // Properly destroy the previous chart instance
+        trendsChart.destroy();
     }
 
     const datasets = progress.map(course => {
-        let cumulativeData = [];
-        let cumulativeTotal = 0;
-
+        // Sort the daily progress by date
         const sortedProgress = course.dailyProgress.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        sortedProgress.forEach(day => {
-            cumulativeTotal += day.slides;
-            cumulativeData.push({
-                x: new Date(day.date + 'T00:00:00'),
-                y: cumulativeTotal
-            });
-        });
+        const cumulativeData = sortedProgress.map((day, index) => ({
+            x: new Date(day.date + 'T00:00:00'),
+            y: course.initialCompleted + sortedProgress.slice(0, index + 1).reduce((sum, entry) => sum + entry.slides, 0)
+        }));
 
+        // If there's no progress data, add initial completed slides
         if (cumulativeData.length === 0 && course.initialCompleted > 0) {
             cumulativeData.push({
                 x: new Date(),
@@ -149,6 +145,7 @@ function updateTrendsChart() {
             });
         }
 
+        // Ensure there are at least two points for the chart
         if (cumulativeData.length === 1) {
             cumulativeData.unshift({
                 x: new Date(cumulativeData[0].x.getTime() - 86400000),
@@ -167,6 +164,7 @@ function updateTrendsChart() {
     const isDarkMode = document.body.classList.contains('dark-mode');
     const textColor = isDarkMode ? '#f0f0f0' : '#666';
 
+    // Calculate the maximum total slides
     const maxTotalSlides = Math.max(...progress.map(course => course.totalSlides));
 
     if (datasets.some(dataset => dataset.data.length > 0)) {
@@ -175,7 +173,7 @@ function updateTrendsChart() {
             data: { datasets },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Allow chart to fill the container but set container constraints
+                maintainAspectRatio: false,
                 scales: {
                     x: {
                         type: 'time',
@@ -200,7 +198,7 @@ function updateTrendsChart() {
                     },
                     y: {
                         beginAtZero: true,
-                        max: maxTotalSlides,
+                        max: maxTotalSlides, // Set the maximum value for y-axis
                         title: {
                             display: true,
                             text: 'Cumulative Slides Completed',
@@ -238,56 +236,94 @@ function updateTrendsChart() {
                 },
                 interaction: {
                     mode: 'nearest',
-                    intersect: true
+                    axis: 'x',
+                    intersect: false
                 }
             }
         });
     } else {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.font = '20px Arial';
         ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
-        ctx.fillText('No data available to display trends', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        ctx.fillText('No progress data available yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
     }
 }
 
 function exportData() {
     const dataStr = JSON.stringify(progress, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-
-    const exportFileDefaultName = 'studyProgress.json';
-
-    let linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
+    const blob = new Blob([dataStr], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const linkElement = document.createElement('a');
+    linkElement.href = url;
+    linkElement.download = 'study_progress_data.json'; 
+    document.body.appendChild(linkElement);
     linkElement.click();
-}
-
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const importedProgress = JSON.parse(e.target.result);
-            progress = importedProgress;
-            saveProgress();
-            renderCourses();
-        } catch (error) {
-            console.error('Error parsing imported data:', error);
-            alert('Failed to import data. Please check the file format.');
-        }
-    };
-    reader.readAsText(file);
+    document.body.removeChild(linkElement);
+    URL.revokeObjectURL(url);
 }
 
 function saveProgress() {
-    localStorage.setItem('studyProgress', JSON.stringify(progress));
+    try {
+        localStorage.setItem('studyProgress', JSON.stringify(progress));
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+    }
 }
 
-// Set maximum height for the chart container to prevent infinite growth
-document.getElementById('chartContainer').style.maxHeight = '500px'; 
-document.getElementById('chartContainer').style.overflowY = 'auto';
+function resizeChart() {
+    if (trendsChart) {
+        trendsChart.resize();
+    }
+}
 
-// Initial rendering
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    if (trendsChart) {
+        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.update();
+    }
+}
+
+window.addEventListener('resize', resizeChart);
+
+window.onclick = function(event) {
+    const modal = document.getElementById('updateProgressModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeModal();
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+    });
+}
+
+// Check for saved dark mode preference
+const savedDarkMode = localStorage.getItem('darkMode');
+if (savedDarkMode === 'true') {
+    document.body.classList.add('dark-mode');
+}
+
+// Add dark mode toggle button event listener
+document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+
 renderCourses();
