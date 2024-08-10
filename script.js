@@ -173,7 +173,7 @@ function updateTrendsChart() {
     // Calculate the maximum total slides
     const maxTotalSlides = Math.max(...progress.map(course => course.totalSlides));
 
-    if (datasets.some(dataset => dataset.data.some(point => point.x && point.y))) {
+    if (datasets.some(dataset => dataset.data.length > 0)) {
         trendsChart = new Chart(ctx, {
             type: 'line',
             data: { datasets },
@@ -204,7 +204,7 @@ function updateTrendsChart() {
                     },
                     y: {
                         beginAtZero: true,
-                        max: maxTotalSlides,
+                        max: maxTotalSlides, // Set the maximum value for y-axis
                         title: {
                             display: true,
                             text: 'Cumulative Slides Completed',
@@ -276,23 +276,28 @@ function saveProgress() {
     }
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function() {
-        const context = this;
-        const args = arguments;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-    };
-}
-
-const resizeChartDebounced = debounce(function() {
+function resizeChart() {
     if (trendsChart) {
         trendsChart.resize();
     }
-}, 250);
+}
 
-window.addEventListener('resize', resizeChartDebounced);
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    if (trendsChart) {
+        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.update();
+    }
+}
+
+window.addEventListener('resize', resizeChart);
 
 window.onclick = function(event) {
     const modal = document.getElementById('updateProgressModal');
