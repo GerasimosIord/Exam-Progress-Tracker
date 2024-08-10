@@ -31,6 +31,7 @@ body {
     color: var(--text-color);
     transition: background-color 0.3s, color 0.3s;
 }
+
 .container {
     max-width: 1000px;
     margin: auto;
@@ -38,16 +39,22 @@ body {
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    min-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
 }
+
 h1, h2 {
     text-align: center;
     color: var(--text-color);
 }
+
 .course-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
 }
+
 .course-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -56,16 +63,19 @@ h1, h2 {
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
 .course-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
+
 .progress-bar {
     background-color: var(--progress-bg);
     border-radius: 13px;
     padding: 3px;
     margin-top: 10px;
 }
+
 .progress {
     background-color: #3498db;
     width: 0%;
@@ -73,6 +83,7 @@ h1, h2 {
     border-radius: 10px;
     transition: width 0.5s ease-in-out;
 }
+
 button {
     background-color: var(--button-bg);
     border: none;
@@ -87,9 +98,11 @@ button {
     border-radius: 4px;
     transition: background-color 0.3s ease;
 }
+
 button:hover {
     background-color: var(--button-hover);
 }
+
 input[type="number"] {
     width: 100%;
     padding: 12px 20px;
@@ -101,9 +114,19 @@ input[type="number"] {
     background-color: var(--card-bg);
     color: var(--text-color);
 }
+
 #trendsChart {
     margin-top: 30px;
+    margin-bottom: 50px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
+
+#trendsCanvas {
+    flex-grow: 1;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -115,6 +138,7 @@ input[type="number"] {
     overflow: auto;
     background-color: var(--modal-bg);
 }
+
 .modal-content {
     background-color: var(--modal-content-bg);
     margin: 15% auto;
@@ -124,10 +148,18 @@ input[type="number"] {
     max-width: 500px;
     border-radius: 8px;
 }
-#exportButton {
-    display: block;
-    margin: 20px auto;
+
+.export-container {
+    text-align: center;
+    margin-top: 20px;
+    padding-bottom: 20px;
 }
+
+#exportButton {
+    display: inline-block;
+    margin: 0 auto;
+}
+
 #darkModeToggle {
     position: fixed;
     top: 20px;
