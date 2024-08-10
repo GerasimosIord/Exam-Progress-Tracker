@@ -150,6 +150,9 @@ function updateTrendsChart() {
         };
     });
 
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const textColor = isDarkMode ? '#f0f0f0' : '#666';
+
     if (datasets.some(dataset => dataset.data.length > 0)) {
         trendsChart = new Chart(ctx, {
             type: 'line',
@@ -166,24 +169,33 @@ function updateTrendsChart() {
                         },
                         title: {
                             display: true,
-                            text: 'Date'
+                            text: 'Date',
+                            color: textColor
                         },
                         ticks: {
                             autoSkip: true,
-                            maxTicksLimit: 10
+                            maxTicksLimit: 10,
+                            color: textColor
                         }
                     },
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Cumulative Slides Completed'
+                            text: 'Cumulative Slides Completed',
+                            color: textColor
+                        },
+                        ticks: {
+                            color: textColor
                         }
                     }
                 },
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            color: textColor
+                        }
                     },
                     tooltip: {
                         mode: 'index',
@@ -212,7 +224,7 @@ function updateTrendsChart() {
         });
     } else {
         ctx.font = '20px Arial';
-        ctx.fillStyle = '#666';
+        ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
         ctx.fillText('No progress data available yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
     }
@@ -245,6 +257,21 @@ function resizeChart() {
     }
 }
 
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    if (trendsChart) {
+        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.update();
+    }
+}
+
 window.addEventListener('resize', resizeChart);
 
 window.onclick = function(event) {
@@ -270,5 +297,14 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// Check for saved dark mode preference
+const savedDarkMode = localStorage.getItem('darkMode');
+if (savedDarkMode === 'true') {
+    document.body.classList.add('dark-mode');
+}
+
+// Add dark mode toggle button event listener
+document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
 
 renderCourses();
