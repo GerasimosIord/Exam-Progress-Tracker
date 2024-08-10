@@ -9,6 +9,13 @@ const courses = [
 let progress;
 let lastUpdateDate;
 
+function updateDateDisplay() {
+    const dateElement = document.getElementById('currentDate');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = new Date().toLocaleDateString(undefined, options);
+    dateElement.textContent = formattedDate;
+}
+
 try {
     const savedData = localStorage.getItem('studyProgress');
     if (savedData) {
@@ -45,6 +52,7 @@ let selectedCourse = null;
 
 function renderCourses() {
     checkAndUpdateProgress();
+    updateDateDisplay();
     const courseList = document.getElementById('courseList');
     courseList.innerHTML = '<div class="course-grid"></div>';
     const courseGrid = courseList.querySelector('.course-grid');
@@ -217,4 +225,5 @@ if (savedDarkMode === 'true') {
 // Add dark mode toggle button event listener
 document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
 
+updateDateDisplay();
 renderCourses();
