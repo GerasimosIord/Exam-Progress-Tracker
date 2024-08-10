@@ -123,7 +123,7 @@ function suggestDailyTarget(course) {
 
 function updateTrendsChart() {
     const ctx = document.getElementById('trendsCanvas').getContext('2d');
-    
+
     if (trendsChart) {
         trendsChart.destroy();  // Properly destroy the previous chart instance
     }
@@ -132,7 +132,6 @@ function updateTrendsChart() {
         let cumulativeData = [];
         let cumulativeTotal = 0;
 
-        // Sort the daily progress by date to ensure data is in chronological order
         const sortedProgress = course.dailyProgress.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         sortedProgress.forEach(day => {
@@ -143,7 +142,6 @@ function updateTrendsChart() {
             });
         });
 
-        // If there's no progress data, add initial completed slides
         if (cumulativeData.length === 0 && course.initialCompleted > 0) {
             cumulativeData.push({
                 x: new Date(),
@@ -151,7 +149,6 @@ function updateTrendsChart() {
             });
         }
 
-        // Ensure there are at least two points for the chart
         if (cumulativeData.length === 1) {
             cumulativeData.unshift({
                 x: new Date(cumulativeData[0].x.getTime() - 86400000),
@@ -178,7 +175,7 @@ function updateTrendsChart() {
             data: { datasets },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: false, // Allow chart to fill the container but set container constraints
                 scales: {
                     x: {
                         type: 'time',
@@ -241,16 +238,15 @@ function updateTrendsChart() {
                 },
                 interaction: {
                     mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
+                    intersect: true
                 }
             }
         });
     } else {
-        ctx.font = '20px Arial';
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
-        ctx.fillText('No progress data available yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        ctx.fillText('No data available to display trends', ctx.canvas.width / 2, ctx.canvas.height / 2);
     }
 }
 
@@ -288,6 +284,10 @@ function importData(event) {
 function saveProgress() {
     localStorage.setItem('studyProgress', JSON.stringify(progress));
 }
+
+// Set maximum height for the chart container to prevent infinite growth
+document.getElementById('chartContainer').style.maxHeight = '500px'; 
+document.getElementById('chartContainer').style.overflowY = 'auto';
 
 // Initial rendering
 renderCourses();
