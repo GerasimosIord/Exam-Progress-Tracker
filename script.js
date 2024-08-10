@@ -1,9 +1,9 @@
 const courses = [
-    { name: 'Molecular Genetics', totalSlides: 878, examDate: '2024-08-30', color: '#FF6B6B' },
-    { name: 'Animal Physiology', totalSlides: 835, examDate: '2024-09-05', color: '#4ECDC4' },
-    { name: 'Μοριακή Βάση Κυτταρικών Λειτουργιών', totalSlides: 411, examDate: '2024-09-06', color: '#45B7D1' },
-    { name: 'Plant Physiology', totalSlides: 259, examDate: '2024-09-12', color: '#98D861' },
-    { name: 'Microbiology', totalSlides: 555, examDate: '2024-09-18', color: '#FFD93D' },
+    { name: 'Molecular Genetics', totalSlides: 878, examDate: '2024-08-30', color: '#FF6B6B', initialCompleted: 300 },
+    { name: 'Animal Physiology', totalSlides: 835, examDate: '2024-09-05', color: '#4ECDC4', initialCompleted: 39 },
+    { name: 'Μοριακή Βάση Κυτταρικών Λειτουργιών', totalSlides: 411, examDate: '2024-09-06', color: '#45B7D1', initialCompleted: 47 },
+    { name: 'Plant Physiology', totalSlides: 259, examDate: '2024-09-12', color: '#98D861', initialCompleted: 10 },
+    { name: 'Microbiology', totalSlides: 555, examDate: '2024-09-18', color: '#FFD93D', initialCompleted: 0 },
 ];
 
 let progress;
@@ -11,15 +11,21 @@ try {
     const savedProgress = localStorage.getItem('studyProgress');
     progress = savedProgress ? JSON.parse(savedProgress) : courses.map(course => ({
         ...course,
-        completedSlides: 0,
-        dailyProgress: []
+        completedSlides: course.initialCompleted,
+        dailyProgress: course.initialCompleted > 0 ? [{
+            date: new Date().toISOString().split('T')[0],
+            slides: course.initialCompleted
+        }] : []
     }));
 } catch (error) {
     console.error('Error accessing localStorage:', error);
     progress = courses.map(course => ({
         ...course,
-        completedSlides: 0,
-        dailyProgress: []
+        completedSlides: course.initialCompleted,
+        dailyProgress: course.initialCompleted > 0 ? [{
+            date: new Date().toISOString().split('T')[0],
+            slides: course.initialCompleted
+        }] : []
     }));
 }
 
@@ -123,6 +129,11 @@ function updateTrendsChart() {
             return acc;
         }, []);
 
+        // If there's only one data point (the initial progress), add a point for today
+        if (cumulativeData.length === 1) {
+            cumulativeData.push({ x: new Date(), y: cumulativeData[0].y });
+        }
+
         return {
             label: course.name,
             data: cumulativeData,
@@ -165,6 +176,14 @@ function updateTrendsChart() {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                    }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4 // Smooth curves for better performance
+                    },
+                    point: {
+                        radius: 0 // Hide points for better performance
                     }
                 }
             }
