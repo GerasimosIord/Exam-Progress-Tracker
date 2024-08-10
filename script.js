@@ -276,28 +276,28 @@ function saveProgress() {
     }
 }
 
-function resizeChart() {
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Debounced resize function
+const debouncedResizeChart = debounce(() => {
     if (trendsChart) {
         trendsChart.resize();
     }
-}
+}, 250);
 
-function toggleDarkMode() {
-    document.body.classList.toggle('dark-mode');
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-    
-    if (trendsChart) {
-        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.update();
-    }
-}
-
-window.addEventListener('resize', resizeChart);
+// Event listener for window resize
+window.addEventListener('resize', debouncedResizeChart);
 
 window.onclick = function(event) {
     const modal = document.getElementById('updateProgressModal');
@@ -331,5 +331,20 @@ if (savedDarkMode === 'true') {
 
 // Add dark mode toggle button event listener
 document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    if (trendsChart) {
+        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
+        trendsChart.update();
+    }
+}
 
 renderCourses();
