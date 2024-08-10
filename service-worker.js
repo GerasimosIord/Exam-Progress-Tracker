@@ -1,12 +1,12 @@
-const CACHE_NAME = 'study-tracker-v1';
+const CACHE_NAME = 'study-tracker-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/script.js',
-  'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js'
+  '/icon-192x192.png',
+  '/icon-512x512.png',
+  'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap'
 ];
 
 self.addEventListener('install', event => {
