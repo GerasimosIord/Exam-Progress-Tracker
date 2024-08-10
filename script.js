@@ -9,14 +9,19 @@ const courses = [
 let progress;
 try {
     const savedProgress = localStorage.getItem('studyProgress');
-    progress = savedProgress ? JSON.parse(savedProgress) : courses.map(course => ({
-        ...course,
-        completedSlides: course.initialCompleted,
-        dailyProgress: course.initialCompleted > 0 ? [{
-            date: new Date().toISOString().split('T')[0],
-            slides: course.initialCompleted
-        }] : []
-    }));
+    if (savedProgress) {
+        progress = JSON.parse(savedProgress);
+    } else {
+        progress = courses.map(course => ({
+            ...course,
+            completedSlides: course.initialCompleted,
+            dailyProgress: course.initialCompleted > 0 ? [{
+                date: new Date().toISOString().split('T')[0],
+                slides: course.initialCompleted
+            }] : []
+        }));
+        localStorage.setItem('studyProgress', JSON.stringify(progress));
+    }
 } catch (error) {
     console.error('Error accessing localStorage:', error);
     progress = courses.map(course => ({
@@ -123,15 +128,16 @@ function updateTrendsChart() {
     }
 
     const datasets = progress.map(course => {
-        const cumulativeData = course.dailyProgress.reduce((acc, day) => {
+        let cumulativeData = course.dailyProgress.reduce((acc, day) => {
             const lastValue = acc.length > 0 ? acc[acc.length - 1].y : 0;
             acc.push({ x: new Date(day.date + 'T00:00:00'), y: lastValue + day.slides });
             return acc;
         }, []);
 
-        // If there's only one data point (the initial progress), add a point for today
-        if (cumulativeData.length === 1) {
-            cumulativeData.push({ x: new Date(), y: cumulativeData[0].y });
+        // Limit to 30 data points maximum
+        if (cumulativeData.length > 30) {
+            const step = Math.floor(cumulativeData.length / 30);
+            cumulativeData = cumulativeData.filter((_, index) => index % step === 0 || index === cumulativeData.length - 1);
         }
 
         return {
@@ -180,12 +186,19 @@ function updateTrendsChart() {
                 },
                 elements: {
                     line: {
-                        tension: 0.4 // Smooth curves for better performance
+                        tension: 0.4
                     },
                     point: {
-                        radius: 0 // Hide points for better performance
+                        radius: 0
                     }
-                }
+                },
+                animation: {
+                    duration: 0 // General animation time
+                },
+                hover: {
+                    animationDuration: 0 // Duration of animations when hovering an item
+                },
+                responsiveAnimationDuration: 0 // Animation duration after a resize
             }
         });
     } else {
