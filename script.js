@@ -64,6 +64,10 @@ function renderCourses() {
         `;
         courseGrid.appendChild(courseCard);
     });
+
+    const trendsChartContainer = document.getElementById('trendsChart');
+    trendsChartContainer.style.height = '400px';
+    
     updateTrendsChart();
 }
 
@@ -103,7 +107,7 @@ function calculatePercentage(completed, total) {
 
 function calculateDaysRemaining(examDate) {
     const today = new Date();
-    const exam = new Date(examDate + 'T00:00:00');  // Ensure consistent date handling
+    const exam = new Date(examDate + 'T00:00:00');
     const diffTime = exam - today;
     return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 }
@@ -134,10 +138,8 @@ function updateTrendsChart() {
             return acc;
         }, []);
 
-        // Limit to 30 data points maximum
-        if (cumulativeData.length > 30) {
-            const step = Math.floor(cumulativeData.length / 30);
-            cumulativeData = cumulativeData.filter((_, index) => index % step === 0 || index === cumulativeData.length - 1);
+        if (cumulativeData.length === 1) {
+            cumulativeData.unshift({ x: new Date(cumulativeData[0].x.getTime() - 86400000), y: 0 });
         }
 
         return {
@@ -165,6 +167,10 @@ function updateTrendsChart() {
                         title: {
                             display: true,
                             text: 'Date'
+                        },
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 10
                         }
                     },
                     y: {
@@ -189,16 +195,19 @@ function updateTrendsChart() {
                         tension: 0.4
                     },
                     point: {
-                        radius: 0
+                        radius: 2,
+                        hoverRadius: 5
                     }
                 },
-                animation: {
-                    duration: 0 // General animation time
-                },
                 hover: {
-                    animationDuration: 0 // Duration of animations when hovering an item
+                    mode: 'nearest',
+                    intersect: true
                 },
-                responsiveAnimationDuration: 0 // Animation duration after a resize
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
             }
         });
     } else {
@@ -230,7 +239,14 @@ function saveProgress() {
     }
 }
 
-// Close modal when clicking outside
+function resizeChart() {
+    if (trendsChart) {
+        trendsChart.resize();
+    }
+}
+
+window.addEventListener('resize', resizeChart);
+
 window.onclick = function(event) {
     const modal = document.getElementById('updateProgressModal');
     if (event.target == modal) {
@@ -238,14 +254,12 @@ window.onclick = function(event) {
     }
 }
 
-// Keyboard navigation for modal
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeModal();
     }
 });
 
-// Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
