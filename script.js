@@ -170,6 +170,9 @@ function updateTrendsChart() {
     const isDarkMode = document.body.classList.contains('dark-mode');
     const textColor = isDarkMode ? '#f0f0f0' : '#666';
 
+    // Calculate the maximum total slides
+    const maxTotalSlides = Math.max(...progress.map(course => course.totalSlides));
+
     if (datasets.some(dataset => dataset.data.length > 0)) {
         trendsChart = new Chart(ctx, {
             type: 'line',
@@ -201,6 +204,7 @@ function updateTrendsChart() {
                     },
                     y: {
                         beginAtZero: true,
+                        max: maxTotalSlides, // Set the maximum value for y-axis
                         title: {
                             display: true,
                             text: 'Cumulative Slides Completed',
