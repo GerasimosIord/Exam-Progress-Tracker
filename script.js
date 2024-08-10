@@ -7,10 +7,14 @@ const courses = [
 ];
 
 let progress;
+let lastUpdateDate;
+
 try {
-    const savedProgress = localStorage.getItem('studyProgress');
-    if (savedProgress) {
-        progress = JSON.parse(savedProgress);
+    const savedData = localStorage.getItem('studyProgress');
+    if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        progress = parsedData.progress;
+        lastUpdateDate = new Date(parsedData.lastUpdateDate);
     } else {
         progress = courses.map(course => ({
             ...course,
@@ -20,7 +24,8 @@ try {
                 slides: course.initialCompleted
             }] : []
         }));
-        localStorage.setItem('studyProgress', JSON.stringify(progress));
+        lastUpdateDate = new Date();
+        saveProgress();
     }
 } catch (error) {
     console.error('Error accessing localStorage:', error);
@@ -32,11 +37,14 @@ try {
             slides: course.initialCompleted
         }] : []
     }));
+    lastUpdateDate = new Date();
+    saveProgress();
 }
 
 let selectedCourse = null;
 
 function renderCourses() {
+    checkAndUpdateProgress();
     const courseList = document.getElementById('courseList');
     courseList.innerHTML = '<div class="course-grid"></div>';
     const courseGrid = courseList.querySelector('.course-grid');
@@ -84,10 +92,16 @@ function updateProgress() {
             progress[courseIndex].completedSlides + slidesCompleted,
             progress[courseIndex].totalSlides
         );
-        progress[courseIndex].dailyProgress.push({
-            date: new Date().toISOString().split('T')[0],
-            slides: slidesCompleted
-        });
+        const today = new Date().toISOString().split('T')[0];
+        const existingProgressIndex = progress[courseIndex].dailyProgress.findIndex(dp => dp.date === today);
+        if (existingProgressIndex !== -1) {
+            progress[courseIndex].dailyProgress[existingProgressIndex].slides += slidesCompleted;
+        } else {
+            progress[courseIndex].dailyProgress.push({
+                date: today,
+                slides: slidesCompleted
+            });
+        }
         saveProgress();
         renderCourses();
         document.getElementById('slidesCompleted').value = '';
@@ -107,15 +121,21 @@ function calculateDaysRemaining(examDate) {
 }
 
 function calculateAverageDailyProgress(course) {
-    if (course.dailyProgress.length === 0) return 0;
-    const totalSlides = course.dailyProgress.reduce((sum, day) => sum + day.slides, 0);
-    return Math.round(totalSlides / course.dailyProgress.length);
+    if (course.dailyProgress.length <= 1) return 0; // Return 0 if only initial progress or no progress
+    const totalSlides = course.dailyProgress.slice(1).reduce((sum, day) => sum + day.slides, 0);
+    return Math.round(totalSlides / (course.dailyProgress.length - 1));
 }
 
 function suggestDailyTarget(course) {
     const daysRemaining = calculateDaysRemaining(course.examDate);
     const slidesRemaining = course.totalSlides - course.completedSlides;
-    return daysRemaining > 0 ? Math.ceil(slidesRemaining / daysRemaining) : 0;
+    if (daysRemaining <= 0) {
+        return slidesRemaining; // All remaining slides if exam is today or past
+    } else if (daysRemaining === 1) {
+        return Math.max(slidesRemaining, Math.ceil(slidesRemaining / 2)); // At least half of remaining slides if 1 day left
+    } else {
+        return Math.max(Math.ceil(slidesRemaining / daysRemaining), 1); // At least 1 slide per day
+    }
 }
 
 function exportData() {
@@ -133,9 +153,28 @@ function exportData() {
 
 function saveProgress() {
     try {
-        localStorage.setItem('studyProgress', JSON.stringify(progress));
+        localStorage.setItem('studyProgress', JSON.stringify({
+            progress: progress,
+            lastUpdateDate: new Date().toISOString()
+        }));
     } catch (error) {
         console.error('Error saving to localStorage:', error);
+    }
+}
+
+function checkAndUpdateProgress() {
+    const today = new Date();
+    if (today.toDateString() !== lastUpdateDate.toDateString()) {
+        progress.forEach(course => {
+            if (course.dailyProgress[course.dailyProgress.length - 1].date !== today.toISOString().split('T')[0]) {
+                course.dailyProgress.push({
+                    date: today.toISOString().split('T')[0],
+                    slides: 0
+                });
+            }
+        });
+        lastUpdateDate = today;
+        saveProgress();
     }
 }
 
