@@ -1,22 +1,47 @@
+:root {
+    --bg-color: #f0f2f5;
+    --text-color: #333;
+    --card-bg: #fff;
+    --card-border: #e0e0e0;
+    --progress-bg: #e0e0e0;
+    --button-bg: #3498db;
+    --button-hover: #2980b9;
+    --modal-bg: rgba(0,0,0,0.4);
+    --modal-content-bg: #fefefe;
+}
+
+.dark-mode {
+    --bg-color: #1a1a1a;
+    --text-color: #f0f0f0;
+    --card-bg: #2c2c2c;
+    --card-border: #444;
+    --progress-bg: #444;
+    --button-bg: #2980b9;
+    --button-hover: #3498db;
+    --modal-bg: rgba(255,255,255,0.1);
+    --modal-content-bg: #2c2c2c;
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;
     margin: 0;
     padding: 20px;
-    background-color: #f0f2f5;
-    color: #333;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 .container {
     max-width: 1000px;
     margin: auto;
-    background: white;
+    background: var(--card-bg);
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
 h1, h2 {
     text-align: center;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 .course-grid {
     display: grid;
@@ -24,8 +49,8 @@ h1, h2 {
     gap: 20px;
 }
 .course-card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 20px;
     transition: all 0.3s ease;
@@ -36,7 +61,7 @@ h1, h2 {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 .progress-bar {
-    background-color: #e0e0e0;
+    background-color: var(--progress-bg);
     border-radius: 13px;
     padding: 3px;
     margin-top: 10px;
@@ -49,7 +74,7 @@ h1, h2 {
     transition: width 0.5s ease-in-out;
 }
 button {
-    background-color: #3498db;
+    background-color: var(--button-bg);
     border: none;
     color: white;
     padding: 10px 20px;
@@ -63,16 +88,18 @@ button {
     transition: background-color 0.3s ease;
 }
 button:hover {
-    background-color: #2980b9;
+    background-color: var(--button-hover);
 }
 input[type="number"] {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
     display: inline-block;
-    border: 1px solid #ccc;
+    border: 1px solid var(--card-border);
     border-radius: 4px;
     box-sizing: border-box;
+    background-color: var(--card-bg);
+    color: var(--text-color);
 }
 #trendsChart {
     margin-top: 30px;
@@ -86,13 +113,13 @@ input[type="number"] {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: var(--modal-bg);
 }
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--modal-content-bg);
     margin: 15% auto;
     padding: 20px;
-    border: 1px solid #888;
+    border: 1px solid var(--card-border);
     width: 80%;
     max-width: 500px;
     border-radius: 8px;
@@ -100,4 +127,10 @@ input[type="number"] {
 #exportButton {
     display: block;
     margin: 20px auto;
+}
+#darkModeToggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
 }
