@@ -35,7 +35,6 @@ try {
 }
 
 let selectedCourse = null;
-let trendsChart = null;
 
 function renderCourses() {
     const courseList = document.getElementById('courseList');
@@ -64,8 +63,6 @@ function renderCourses() {
         `;
         courseGrid.appendChild(courseCard);
     });
-
-    updateTrendsChart();
 }
 
 function selectCourse(courseName) {
@@ -121,140 +118,6 @@ function suggestDailyTarget(course) {
     return daysRemaining > 0 ? Math.ceil(slidesRemaining / daysRemaining) : 0;
 }
 
-function updateTrendsChart() {
-    const ctx = document.getElementById('trendsCanvas').getContext('2d');
-    
-    if (trendsChart) {
-        trendsChart.destroy();
-    }
-
-    const datasets = progress.map(course => {
-        let cumulativeData = [];
-        let cumulativeTotal = 0;
-
-        // Sort the daily progress by date
-        const sortedProgress = course.dailyProgress.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        sortedProgress.forEach(day => {
-            cumulativeTotal += day.slides;
-            cumulativeData.push({
-                x: new Date(day.date + 'T00:00:00'),
-                y: cumulativeTotal
-            });
-        });
-
-        // If there's no progress data, add initial completed slides
-        if (cumulativeData.length === 0 && course.initialCompleted > 0) {
-            cumulativeData.push({
-                x: new Date(),
-                y: course.initialCompleted
-            });
-        }
-
-        // Ensure there are at least two points for the chart
-        if (cumulativeData.length === 1) {
-            cumulativeData.unshift({
-                x: new Date(cumulativeData[0].x.getTime() - 86400000),
-                y: 0
-            });
-        }
-
-        return {
-            label: course.name,
-            data: cumulativeData,
-            borderColor: course.color,
-            fill: false
-        };
-    });
-
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    const textColor = isDarkMode ? '#f0f0f0' : '#666';
-
-    // Calculate the maximum total slides
-    const maxTotalSlides = Math.max(...progress.map(course => course.totalSlides));
-
-    if (datasets.some(dataset => dataset.data.length > 0)) {
-        trendsChart = new Chart(ctx, {
-            type: 'line',
-            data: { datasets },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day',
-                            tooltipFormat: 'MMM d, yyyy'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Date',
-                            color: textColor,
-                            padding: {
-                                top: 10,
-                                bottom: 30
-                            }
-                        },
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 10,
-                            color: textColor
-                        }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: maxTotalSlides, // Set the maximum value for y-axis
-                        title: {
-                            display: true,
-                            text: 'Cumulative Slides Completed',
-                            color: textColor
-                        },
-                        ticks: {
-                            color: textColor
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: textColor
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                    }
-                },
-                elements: {
-                    line: {
-                        tension: 0.4
-                    },
-                    point: {
-                        radius: 2,
-                        hoverRadius: 5
-                    }
-                },
-                hover: {
-                    mode: 'nearest',
-                    intersect: true
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-    } else {
-        ctx.font = '20px Arial';
-        ctx.fillStyle = textColor;
-        ctx.textAlign = 'center';
-        ctx.fillText('No progress data available yet', ctx.canvas.width / 2, ctx.canvas.height / 2);
-    }
-}
-
 function exportData() {
     const dataStr = JSON.stringify(progress, null, 2);
     const blob = new Blob([dataStr], {type: "application/json"});
@@ -276,28 +139,11 @@ function saveProgress() {
     }
 }
 
-function resizeChart() {
-    if (trendsChart) {
-        trendsChart.resize();
-    }
-}
-
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const isDarkMode = document.body.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
-    
-    if (trendsChart) {
-        trendsChart.options.scales.x.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.y.ticks.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.x.title.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.scales.y.title.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.options.plugins.legend.labels.color = isDarkMode ? '#f0f0f0' : '#666';
-        trendsChart.update();
-    }
 }
-
-window.addEventListener('resize', resizeChart);
 
 window.onclick = function(event) {
     const modal = document.getElementById('updateProgressModal');
