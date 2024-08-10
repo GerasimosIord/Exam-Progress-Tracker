@@ -84,12 +84,12 @@ function updateProgress() {
     if (selectedCourse && !isNaN(slidesCompleted) && slidesCompleted >= 0) {
         const courseIndex = progress.findIndex(course => course.name === selectedCourse.name);
         progress[courseIndex].completedSlides = Math.min(
-            progress[courseIndex].completedSlides + slidesCompleted,
+            progress[courseIndex].completedSlides + slidesCompleted, 
             progress[courseIndex].totalSlides
         );
         progress[courseIndex].dailyProgress.push({
             date: new Date().toISOString().split('T')[0],
-            slides: slidesCompleted
+            slides: slidesCompleted    
         });
         saveProgress();
         renderCourses();
@@ -129,19 +129,13 @@ function updateTrendsChart() {
     }
 
     const datasets = progress.map(course => {
-        let cumulativeData = [];
-        let cumulativeTotal = 0;
-
         // Sort the daily progress by date
         const sortedProgress = course.dailyProgress.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        sortedProgress.forEach(day => {
-            cumulativeTotal += day.slides;
-            cumulativeData.push({
-                x: new Date(day.date + 'T00:00:00'),
-                y: cumulativeTotal
-            });
-        });
+        const cumulativeData = sortedProgress.map((day, index) => ({
+            x: new Date(day.date + 'T00:00:00'),
+            y: course.initialCompleted + sortedProgress.slice(0, index + 1).reduce((sum, entry) => sum + entry.slides, 0)
+        }));
 
         // If there's no progress data, add initial completed slides
         if (cumulativeData.length === 0 && course.initialCompleted > 0) {
@@ -261,7 +255,7 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const linkElement = document.createElement('a');
     linkElement.href = url;
-    linkElement.download = 'study_progress_data.json';
+    linkElement.download = 'study_progress_data.json'; 
     document.body.appendChild(linkElement);
     linkElement.click();
     document.body.removeChild(linkElement);
