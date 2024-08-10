@@ -65,9 +65,6 @@ function renderCourses() {
         courseGrid.appendChild(courseCard);
     });
 
-    const trendsChartContainer = document.getElementById('trendsChart');
-    trendsChartContainer.style.height = '400px';
-    
     updateTrendsChart();
 }
 
@@ -170,7 +167,11 @@ function updateTrendsChart() {
                         title: {
                             display: true,
                             text: 'Date',
-                            color: textColor
+                            color: textColor,
+                            padding: {
+                                top: 10,
+                                bottom: 30
+                            }
                         },
                         ticks: {
                             autoSkip: true,
@@ -219,6 +220,11 @@ function updateTrendsChart() {
                     mode: 'nearest',
                     axis: 'x',
                     intersect: false
+                },
+                layout: {
+                    padding: {
+                        bottom: 20
+                    }
                 }
             }
         });
