@@ -206,9 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const maxTotalSlides = Math.max(...progress.map(course => course.totalSlides));
         console.log("Max total slides:", maxTotalSlides);
 
-        // Set a fixed height for the chart container
+        // Set dimensions for the chart container
         trendsChartElement.style.height = '400px';
-        console.log("Chart container height set to 400px");
+        trendsChartElement.style.width = '100%';
+        console.log("Chart container dimensions set");
 
         // Fail-safe: Check if we have valid data to display
         if (!datasets.some(dataset => dataset.data.length > 0) || maxTotalSlides <= 0) {
@@ -227,6 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                aspectRatio: 2,
                 scales: {
                     x: {
                         type: 'time',
@@ -279,7 +281,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         hoverRadius: 5
                     }
                 },
-                animation: false // Disable all animations
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart',
+                    onProgress: function(animation) {
+                        console.log(`Animation progress: ${animation.currentStep / animation.numSteps * 100}%`);
+                    },
+                    onComplete: function() {
+                        console.log("Chart animation completed");
+                    }
+                }
             }
         });
         console.log("Chart created successfully");
